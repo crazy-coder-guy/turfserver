@@ -162,9 +162,9 @@ class TurfService {
     const lng = parseFloat(longitude);
     const rad = parseFloat(radius);
 
-    // Distance calculation in km using spherical law of cosines
+    // Distance calculation in km using spherical law of cosines (safer version)
     const distanceSql = sequelize.literal(
-      `6371 * acos(cos(radians(${lat})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(latitude)))`
+      `6371 * acos(LEAST(1, GREATEST(-1, cos(radians(${lat})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(latitude)))))`
     );
 
     const turfs = await Turf.findAll({

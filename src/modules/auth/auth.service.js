@@ -9,68 +9,96 @@ const googleClient = new OAuth2Client(env.GOOGLE.CLIENT_ID);
 
 class AuthService {
   async signup(userData) {
-    const { name, email, password } = userData;
+    const { name, email, password, role = 'user' } = userData;
 
+    // Check if email already exists in either table
     const existingOwner = await TurfOwner.findOne({ where: { email } });
-    if (existingOwner) {
+    const existingUser = await User.findOne({ where: { email } });
+
+    if (existingOwner || existingUser) {
       throw new Error('Email is already registered');
     }
 
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    const owner = await TurfOwner.create({
-      name,
-      email,
-      password_hash,
-      role: 'owner',
-      is_active: true,
-    });
+    let createdUser;
+    if (role === 'owner') {
+      createdUser = await TurfOwner.create({
+        name,
+        email,
+        password_hash,
+        role: 'owner',
+        is_active: true,
+      });
+    } else {
+      createdUser = await User.create({
+        name,
+        email,
+        password: password_hash, // User model uses 'password' instead of 'password_hash'
+        is_active: true,
+      });
+    }
 
-    const tokens = this.generateTokens(owner);
+    const tokens = this.generateTokens(createdUser);
 
     return {
       ...tokens,
       user: {
-        id: owner.id,
-        email: owner.email,
-        name: owner.name,
-        role: owner.role,
-        kyc_status: owner.kyc_status,
-        onboarding_completed: owner.onboarding_completed,
+        id: createdUser.id,
+        email: createdUser.email,
+        name: createdUser.name,
+        role: createdUser.role || 'user',
+        kyc_status: createdUser.kyc_status || 'none',
+        onboarding_completed: createdUser.onboarding_completed || false,
       },
     };
   }
 
   async login(email, password, rememberMe = false) {
-    const owner = await TurfOwner.findOne({ where: { email } });
-    if (!owner) {
+    // Try finding in both tables
+    let userRecord = await TurfOwner.findOne({ where: { email } });
+    let isOwner = true;
+
+    if (!userRecord) {
+      userRecord = await User.findOne({ where: { email } });
+      isOwner = false;
+    }
+
+    if (!userRecord) {
       throw new Error('Invalid email or password');
     }
 
-    const isMatch = await bcrypt.compare(password, owner.password_hash);
+    // Handle different password field names in models
+    const storedHash = isOwner ? userRecord.password_hash : userRecord.password;
+    
+    if (!storedHash) {
+      throw new Error('Please login using Google');
+    }
+
+    const isMatch = await bcrypt.compare(password, storedHash);
     if (!isMatch) {
       throw new Error('Invalid email or password');
     }
 
-    if (!owner.is_active && owner.role !== 'super_admin') {
+    if (!userRecord.is_active && userRecord.role !== 'super_admin') {
       throw new Error('Your account is not active. Please contact admin.');
     }
 
-    const tokens = this.generateTokens(owner);
+    const tokens = this.generateTokens(userRecord);
 
-    owner.last_login_at = new Date();
-    await owner.save();
+    userRecord.last_login_at = new Date();
+    await userRecord.save();
 
     return {
       ...tokens,
       user: {
-        id: owner.id,
-        email: owner.email,
-        name: owner.name,
-        role: owner.role,
-        kyc_status: owner.kyc_status,
-        onboarding_completed: owner.onboarding_completed,
+        id: userRecord.id,
+        email: userRecord.email,
+        name: userRecord.name,
+        role: userRecord.role || 'user',
+        kyc_status: userRecord.kyc_status || 'none',
+        onboarding_completed: userRecord.onboarding_completed || false,
       },
     };
   }
@@ -94,7 +122,7 @@ class AuthService {
   async refresh(refreshToken) {
     try {
       const decoded = jwt.verify(refreshToken, env.JWT.REFRESH_SECRET);
-      // Try finding in both tables or define which one based on payload if needed
+      
       let user = await TurfOwner.findByPk(decoded.id);
       if (!user) user = await User.findByPk(decoded.id);
 
@@ -115,9 +143,8 @@ class AuthService {
   }
 
   async getMe(id) {
-    // Try finding in both tables
     let user = await TurfOwner.findByPk(id, { attributes: { exclude: ['password_hash'] } });
-    if (!user) user = await User.findByPk(id);
+    if (!user) user = await User.findByPk(id, { attributes: { exclude: ['password'] } });
     return user;
   }
 
@@ -160,6 +187,7 @@ class AuthService {
           name: user.name,
           profile_image_url: user.profile_image_url,
           is_active: user.is_active,
+          role: 'user'
         },
       };
     } catch (error) {
@@ -169,7 +197,6 @@ class AuthService {
   }
 
   async updateProfile(id, updateData) {
-    // Try finding in both tables
     let user = await User.findByPk(id);
     if (!user) {
       user = await TurfOwner.findByPk(id);
@@ -178,7 +205,6 @@ class AuthService {
     if (!user) {
       throw new Error('User not found');
     }
-
 
     const allowedFields = ['name', 'mobile_number', 'gender', 'profile_image_url', 'fcm_token'];
     
