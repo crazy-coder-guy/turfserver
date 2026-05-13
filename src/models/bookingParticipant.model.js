@@ -28,7 +28,7 @@ const BookingParticipant = sequelize.define('BookingParticipant', {
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM('pending', 'paid'),
+    type: DataTypes.ENUM('pending', 'paid', 'confirmed'),
     defaultValue: 'pending',
   },
 }, {

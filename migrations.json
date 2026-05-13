@@ -11,5 +11,6 @@
   "20260510000007-create-booking-participants.js",
   "20260510000008-create-followers.js",
   "20260513000003-add-missing-fields-to-turfs.js",
-  "20260513000001-add-google-id-to-owners.js"
+  "20260513000001-add-google-id-to-owners.js",
+  "20260513000004-update-booking-participant-status.js"
 ]
