@@ -1,16 +1,14 @@
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 export const env = {
   PORT: process.env.PORT || 4000,
   NODE_ENV: process.env.NODE_ENV || 'development',
-  DB: {
-    NAME: process.env.DB_NAME,
-    USER: process.env.DB_USER,
-    PASSWORD: process.env.DB_PASSWORD,
-    HOST: process.env.DB_HOST,
-    PORT: process.env.DB_PORT,
-  },
+  SUPABASE_DATABASE_URL: process.env.SUPABASE_DATABASE_URL,
   JWT: {
     SECRET: process.env.JWT_SECRET || 'your-secret-key',
     EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1h',
