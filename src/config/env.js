@@ -29,5 +29,10 @@ export const env = {
   RAZORPAY: {
     KEY_ID: process.env.RAZORPAY_KEY_ID,
     KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+  },
+  SUPABASE: {
+    URL: process.env.SUPABASE_URL,
+    ANON_KEY: process.env.SUPABASE_ANON_KEY,
+    SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   }
 };
