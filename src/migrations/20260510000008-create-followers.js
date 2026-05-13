@@ -1,4 +1,10 @@
 export const up = async (queryInterface, Sequelize) => {
+  const tables = await queryInterface.showAllTables();
+  if (tables.includes('Followers') || tables.includes('followers')) {
+    console.log('Table Followers already exists, skipping creation.');
+    return;
+  }
+
   await queryInterface.createTable('Followers', {
     id: {
       type: Sequelize.UUID,
@@ -9,7 +15,7 @@ export const up = async (queryInterface, Sequelize) => {
       type: Sequelize.UUID,
       allowNull: false,
       references: {
-        model: 'users', // Use lowercase 'users' as per the users table migration
+        model: 'users',
         key: 'id',
       },
       onUpdate: 'CASCADE',

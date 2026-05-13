@@ -6,5 +6,8 @@
   "20260509000000-setup-users.js",
   "20260510000000-create-user-bookings.js",
   "20260510000002-create-notifications-table.js",
-  "20260510000003-create-reviews.js"
+  "20260510000003-create-reviews.js",
+  "20260510000006-add-review-reminder.js",
+  "20260510000007-create-booking-participants.js",
+  "20260510000008-create-followers.js"
 ]

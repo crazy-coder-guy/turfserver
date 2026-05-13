@@ -1,4 +1,10 @@
 export const up = async (queryInterface, Sequelize) => {
+  const tables = await queryInterface.showAllTables();
+  if (tables.includes('booking_participants')) {
+    console.log('Table booking_participants already exists, skipping creation.');
+    return;
+  }
+
   await queryInterface.createTable('booking_participants', {
     id: {
       type: Sequelize.UUID,
