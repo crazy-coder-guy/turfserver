@@ -1,0 +1,5 @@
+{
+  "ignore": ["migrations.json", "node_modules", "src/scripts/check-db.js"],
+  "ext": "js,json",
+  "exec": "node src/server.js"
+}
